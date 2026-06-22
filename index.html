@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>Personal Health & Routine Dashboard</title>
+<style>
+    * { box-sizing: border-box; }
+    :root {
+        --bg: #0a0c10;
+        --surface: rgba(255,255,255,0.04);
+        --border: rgba(255,255,255,0.08);
+        --text: #e8eaed;
+        --text-sub: #8b9099;
+        --text-dim: #5c626b;
+        --danger: #ff5b6e;
+    }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background:
+            radial-gradient(1200px 600px at 15% -10%, rgba(76,175,128,0.10), transparent 60%),
+            radial-gradient(1000px 500px at 90% 0%, rgba(33,150,243,0.10), transparent 55%),
+            var(--bg);
+        background-attachment: fixed;
+        color: var(--text);
+        margin: 0;
+        padding: 28px 18px 60px;
+        line-height: 1.55;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+    }
+    .container { max-width: 1180px; margin: 0 auto; }
+    .header {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        flex-wrap: wrap; gap: 16px; margin-bottom: 32px; padding-bottom: 22px;
+        border-bottom: 1px solid var(--border);
+    }
+    .header .title-wrap { display: flex; flex-direction: column; gap: 6px; }
+    .header .eyebrow {
+        font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase;
+        color: var(--text-dim); font-weight: 600;
+    }
+    .header h1 {
+        margin: 0; font-size: clamp(1.6rem, 4vw, 2.3rem); font-weight: 800; letter-spacing: -0.02em;
+        background: linear-gradient(120deg, #ffffff, #9fb4c7);
+        -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .clock { text-align: right; font-variant-numeric: tabular-nums; }
+    .clock .time-now { font-size: 1.7rem; font-weight: 700; }
+    .clock .date-now { font-size: 0.82rem; color: var(--text-sub); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+    .card {
+        position: relative; background: var(--surface); border: 1px solid var(--border);
+        border-radius: 18px; padding: 22px 22px 18px;
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 30px -12px rgba(0,0,0,0.6);
+        transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; overflow: hidden;
+    }
+    .card::before {
+        content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+        background: linear-gradient(90deg, var(--c), transparent); opacity: 0.9;
+    }
+    .card:hover {
+        transform: translateY(-4px);
+        border-color: color-mix(in srgb, var(--c) 45%, var(--border));
+        box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 22px 44px -16px rgba(0,0,0,0.75);
+    }
+    .card-head { display: flex; align-items: center; gap: 13px; margin-bottom: 16px; }
+    .chip {
+        width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; display: grid;
+        place-items: center; font-size: 1.25rem;
+        background: color-mix(in srgb, var(--c) 18%, transparent);
+        border: 1px solid color-mix(in srgb, var(--c) 35%, transparent);
+    }
+    .card-head h2 { margin: 0; font-size: 1.02rem; font-weight: 700; color: var(--text); }
+    .card-head .sub {
+        display: block; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.12em;
+        text-transform: uppercase; color: color-mix(in srgb, var(--c) 70%, var(--text-sub)); margin-top: 2px;
+    }
+    .task { display: flex; align-items: flex-start; gap: 13px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .task:last-of-type { border-bottom: none; }
+    .time {
+        flex-shrink: 0; min-width: 84px; text-align: center; font-size: 0.74rem; font-weight: 700;
+        padding: 4px 8px; border-radius: 7px; margin-top: 1px;
+        color: color-mix(in srgb, var(--c) 85%, white);
+        background: color-mix(in srgb, var(--c) 14%, transparent);
+        border: 1px solid color-mix(in srgb, var(--c) 26%, transparent);
+    }
+    .desc { flex-grow: 1; font-size: 0.92rem; color: var(--text); }
+    .desc .muted { color: var(--text-sub); }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+        font-size: 0.76rem; font-weight: 600; padding: 3px 9px; border-radius: 999px;
+        color: color-mix(in srgb, var(--c) 80%, white);
+        background: color-mix(in srgb, var(--c) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--c) 24%, transparent);
+    }
+    .alert {
+        display: flex; gap: 9px; align-items: flex-start; margin-top: 14px; padding: 11px 13px;
+        font-size: 0.82rem; color: #ffd0d6; background: rgba(255,91,110,0.09);
+        border: 1px solid rgba(255,91,110,0.25); border-left: 3px solid var(--danger); border-radius: 10px;
+    }
+    .alert .ico { flex-shrink: 0; }
+    .footer { margin-top: 28px; text-align: center; font-size: 0.76rem; color: var(--text-dim); letter-spacing: 0.04em; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="title-wrap">
+            <span class="eyebrow">Personal Protocol</span>
+            <h1>🛠️ System Routine Dashboard</h1>
+        </div>
+        <div class="clock">
+            <div class="time-now" id="clock">--:--</div>
+            <div class="date-now" id="date">불러오는 중…</div>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="card" style="--c:#34d399;">
+            <div class="card-head"><div class="chip">💊</div><div><h2>영양제 &amp; 투약</h2><span class="sub">Absorption Control</span></div></div>
+            <div class="task"><span class="time">기상 직후</span><span class="desc">물 1잔 → 다이소 유산균 <span class="muted">(공복)</span><br>로게인폼 <span class="muted">(아침)</span></span></div>
+            <div class="task"><span class="time">아침 식후</span><span class="desc">임팩타민, 쏜 SAT <span class="muted">(지용성 흡수)</span></span></div>
+            <div class="task"><span class="time">점심 식후</span><span class="desc">비타민C 3000mg, 피나스테리드</span></div>
+            <div class="task"><span class="time">15:00 공복</span><span class="desc">쏜 아르기닌 2정 <span class="muted">(흡수 극대화)</span></span></div>
+            <div class="task"><span class="time">저녁 식후</span><span class="desc">루테인 <span class="muted">(지방 병합 흡수)</span></span></div>
+            <div class="task"><span class="time">취침 1h 전</span><span class="desc">로게인폼 <span class="muted">(저녁)</span><br>멜라토닌 2정 <span class="muted">(수면 위상 복구 필요시만)</span></span></div>
+        </div>
+
+        <div class="card" style="--c:#fbbf24;">
+            <div class="card-head"><div class="chip">🍽️</div><div><h2>식단</h2><span class="sub">Clean Bulk &amp; Cholesterol</span></div></div>
+            <div class="task"><span class="time">탄/단/지</span><span class="desc">40% / 40% / 20% 볼륨 유지</span></div>
+            <div class="task"><span class="time">단백질</span><span class="desc">검은콩, 계란 흰자, 뒷다리살, 우둔살<br>등푸른생선 <span class="muted">(주 2회 필수)</span></span></div>
+            <div class="task"><span class="time">부스터</span><span class="desc"><span class="tags"><span class="tag">마늘</span><span class="tag">고추</span><span class="tag">토마토</span><span class="tag">귀리/미역</span></span></span></div>
+            <div class="task"><span class="time">식간 간식</span><span class="desc">바나나 + 아몬드 15알 + 무가당 두유</span></div>
+            <div class="alert"><span class="ico">🚫</span><span><b>Strict Ban</b> — 포화지방 / 액상과당<br>(삼겹살, 믹스커피 절대 금지)</span></div>
+        </div>
+
+        <div class="card" style="--c:#38bdf8;">
+            <div class="card-head"><div class="chip">🏋️</div><div><h2>운동</h2><span class="sub">45m Limit Protocol</span></div></div>
+            <div class="task"><span class="time">월·수·금</span><span class="desc"><b>대근육 전신</b> <span class="muted">/ 45분 / 60초 휴식</span><br>고블릿스쿼트, 벤트오버로우, 플로어프레스, 숄더프레스 <span class="muted">(12~15회 3세트)</span></span></div>
+            <div class="task"><span class="time">화·목</span><span class="desc"><b>심폐 유산소</b> <span class="muted">/ 35분</span><br>야외 트랙 Zone 2 조깅</span></div>
+            <div class="task"><span class="time">토</span><span class="desc"><b>팔 두께 &amp; 코어</b> <span class="muted">/ 30분</span><br>해머컬, 오버헤드 익스텐션, 플랭크</span></div>
+            <div class="task"><span class="time">일</span><span class="desc">완전 휴식 <span class="muted">(점막 및 근신경계 회복)</span></span></div>
+        </div>
+
+        <div class="card" style="--c:#a78bfa;">
+            <div class="card-head"><div class="chip">🧽</div><div><h2>원룸 통제</h2><span class="sub">Lung / Allergy Defense</span></div></div>
+            <div class="task"><span class="time">아침</span><span class="desc">창문 열고 환풍기/후드 5분 MAX 가동<br>침구 돌돌이 밀기 → 가습기 건조</span></div>
+            <div class="task"><span class="time">야간</span><span class="desc">에어컨 상향 고정 + 가습기 1m 내 가동</span></div>
+            <div class="task"><span class="time">Weekly</span><span class="desc">10분 환기 → 10분 대기(침강) → 청소기 → 물걸레 → 온수 세탁</span></div>
+            <div class="alert"><span class="ico">⚠️</span><span>빨래는 침대에서 멀리 건조. <b>마른 먼지떨이 절대 금지.</b></span></div>
+        </div>
+    </div>
+
+    <div class="footer">Stay disciplined. — updated daily</div>
+</div>
+
+<script>
+    (function () {
+        const days = ['일', '월', '화', '수', '목', '금', '토'];
+        function tick() {
+            const d = new Date();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            const clock = document.getElementById('clock');
+            const date = document.getElementById('date');
+            if (clock) clock.textContent = hh + ':' + mm;
+            if (date) date.textContent = `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()} (${days[d.getDay()]})`;
+        }
+        tick();
+        setInterval(tick, 1000 * 20);
+    })();
+</script>
+</body>
+</html>
